@@ -117,7 +117,7 @@ def write_mkdocs_yml(sections):
     """수집된 파일 목록으로 mkdocs.yml 파일을 생성합니다."""
     config = {
         "site_name": "Singularity Daily",
-        "site_url": "https://leejunyoung920.github.io/SingularityDaily/",
+        "site_url": "https://leejunyoung399.github.io/SingularityDaily/",
         "theme": {
             "name": "material",
             "language": "ko",
