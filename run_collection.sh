@@ -28,5 +28,5 @@ else
   
   # GitHub 저장소에 변경 내용을 푸시합니다.
   # GITHUB_PAT는 Render에 설정할 개인용 액세스 토큰입니다.
-  git push https://${GITHUB_PAT}@github.com/leejunyoung399/SingularityDaily.git main
+  git push https://${GITHUB_PAT}@github.com/leejunyoung920/SingularityDaily.git main
 fi

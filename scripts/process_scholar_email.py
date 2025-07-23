@@ -46,17 +46,32 @@ def get_gmail_service():
     creds = None
     if os.path.exists(TOKEN_PATH):
         creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+    
+    # 토큰이 없거나 유효하지 않은 경우
     if not creds or not creds.valid:
+        # 리프레시 토큰이 있으면, 사용자 상호작용 없이 토큰을 갱신합니다.
         if creds and creds.expired and creds.refresh_token:
+            logging.info("Gmail API 토큰이 만료되어 갱신합니다...")
             creds.refresh(Request())
+            # 로컬 실행 시 갱신된 토큰을 저장합니다.
+            with open(TOKEN_PATH, "w") as token:
+                token.write(creds.to_json())
         else:
+            # Render 환경 변수를 확인하여 서버인지 로컬인지 구분합니다.
+            if os.getenv("RENDER"):
+                logging.error("Gmail 인증 실패: 유효한 'token.json'이 필요합니다. 'refresh_token'이 포함된 토큰을 로컬에서 생성하여 Render의 Secret File로 업데이트해주세요.")
+                return None
+
+            # 로컬 환경에서만 실행되는 인증 흐름
+            logging.info("새로운 Gmail API 토큰을 생성합니다...")
             if not os.path.exists(CREDENTIALS_PATH):
-                logging.error(f"'{CREDENTIALS_PATH}' 파일을 찾을 수 없습니다. Google Cloud에서 다운로드 받아주세요.")
+                logging.error(f"'{CREDENTIALS_PATH}' 파일을 찾을 수 없습니다.")
                 return None
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
             creds = flow.run_local_server(port=0)
-        with open(TOKEN_PATH, "w") as token:
-            token.write(creds.to_json())
+            with open(TOKEN_PATH, "w") as token:
+                token.write(creds.to_json())
+
     return build("gmail", "v1", credentials=creds)
 
 
