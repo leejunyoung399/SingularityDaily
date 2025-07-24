@@ -181,15 +181,18 @@ def main():
 
     service = get_gmail_service()
     if not service:
-        return
+        # get_gmail_service 내부에서 이미 CRITICAL 에러를 로깅했으므로, 여기서는 예외를 발생시켜 프로세스를 중단시킵니다.
+        raise RuntimeError("Gmail 서비스 객체를 가져오지 못해 스크립트를 중단합니다.")
 
     # 읽지 않은 구글 스칼라 알리미 메일만 가져오도록 쿼리를 복원합니다.
     query = "from:scholaralerts-noreply@google.com is:unread"
+    logging.info(f"🔍 Gmail에서 다음 쿼리로 새 논문 알림을 검색합니다: '{query}'")
     results = service.users().messages().list(userId="me", q=query).execute()
     messages = results.get("messages", [])
 
     if not messages:
-        logging.info("처리할 새 Google Scholar 알리미 메일이 없습니다.")
+        # 메시지가 없을 때도 성공적으로 확인했다는 의미로 ✅ 아이콘을 추가합니다.
+        logging.info("✅ 처리할 새 Google Scholar 알리미 메일이 없습니다.")
         return
 
     logging.info(f"총 {len(messages)}개의 새 알리미 메일을 발견했습니다.")
