@@ -7,11 +7,8 @@ import yaml
 from datetime import datetime
 import base64
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from .common_utils import get_gmail_service
 
 # --- 설정 ---
 # 프로젝트 루트 디렉터리
@@ -28,12 +25,6 @@ GMAIL_QUERY = 'is:unread'
 # 처리 후 이메일을 이동시킬 라벨 이름. 라벨이 없다면 자동 생성됩니다.
 # None으로 설정하면 아무 작업도 하지 않습니다.
 GMAIL_LABEL_AFTER_PROCESS = 'Processed'
-# Google Cloud에서 다운로드한 credentials.json 파일 경로
-CREDENTIALS_FILE = PROJECT_ROOT / "credentials.json"
-# 인증 후 생성되는 토큰 파일 경로
-TOKEN_FILE = PROJECT_ROOT / "token.json"
-# API 스코프. 이메일 읽기 및 수정을 위해 'gmail.modify' 사용
-SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 
 # --- 함수 정의 ---
@@ -146,29 +137,6 @@ def update_mkdocs_nav(new_topic_files):
         print(f"성공: {MKDOCS_CONFIG_PATH.name} 파일의 네비게이션에 {added_count}개의 새 토픽을 추가했습니다.")
     else:
         print("네비게이션에 이미 모든 파일이 존재합니다.")
-
-def get_gmail_service():
-    """Gmail API 서비스 객체를 생성하고 반환합니다."""
-    creds = None
-    if TOKEN_FILE.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
-    
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_FILE), SCOPES)
-            creds = flow.run_local_server(port=0)
-        
-        with open(TOKEN_FILE, 'w') as token:
-            token.write(creds.to_json())
-
-    try:
-        service = build('gmail', 'v1', credentials=creds)
-        return service
-    except HttpError as error:
-        print(f'An error occurred: {error}')
-        return None
 
 def get_or_create_label(service, label_name):
     """주어진 이름의 라벨 ID를 찾거나, 없으면 새로 생성합니다."""

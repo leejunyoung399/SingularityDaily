@@ -7,14 +7,11 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from bs4 import BeautifulSoup
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 
 from .common_utils import (
     clean_google_url,
     fetch_article_body,
+    get_gmail_service,
     is_duplicate_md,
     safe_filename,
     translate_text,
@@ -23,14 +20,10 @@ from .common_utils import (
 )
 
 # --- Constants ---
-SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
-TOKEN_PATH = "token.json"
-CREDENTIALS_PATH = "credentials.json"
 SEEN_PAPERS_FILE = "seen_scholar_messages.json"
 
 PAPERS_OUTPUT_DIR = os.path.join("docs", "keywords")
 MIN_BODY_LENGTH = 300
-API_RATE_LIMIT_DELAY = 1.5  # seconds
 
 
 # --- Logging Setup ---
@@ -39,6 +32,55 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],
 )
+
+
+def get_html_payload_from_message(msg):
+    """Gmail API 메시지 객체에서 HTML payload를 재귀적으로 찾습니다."""
+    if "parts" in msg["payload"]:
+        for part in msg["payload"]["parts"]:
+            if part["mimeType"] == "text/html":
+                return part["body"].get("data")
+            # 재귀 호출
+            data = get_html_payload_from_message({"payload": part})
+            if data:
+                return data
+    elif msg["payload"]["mimeType"] == "text/html":
+        return msg["payload"]["body"].get("data")
+    return None
+
+
+def parse_scholar_email(msg):
+    """Gmail 메시지를 파싱하여 키워드와 논문 목록을 추출합니다."""
+    headers = {h["name"]: h["value"] for h in msg["payload"]["headers"]}
+    subject = headers.get("Subject", "")
+
+    # "keyword - new results" 형식의 제목에서 키워드 추출
+    keyword_match = re.match(r"^(.*?) - new results", subject)
+    if keyword_match:
+        keyword = keyword_match.group(1).strip()
+    else:
+        keyword = subject.strip() # 매치 실패 시, 제목 전체를 키워드로 사용
+
+    logging.info(f"🔑 추출된 키워드: {keyword}")
+
+    body_data = get_html_payload_from_message(msg)
+    if not body_data:
+        logging.error("이메일에서 HTML 콘텐츠를 찾을 수 없습니다.")
+        return keyword, []
+
+    html_content = base64.urlsafe_b64decode(body_data).decode("utf-8")
+    soup = BeautifulSoup(html_content, "html.parser")
+    articles = []
+
+    for link_tag in soup.find_all("a", class_="gse_alrt_title"):
+        title_en = link_tag.get_text(strip=True)
+        url = link_tag.get("href", "")
+        snippet_tag = link_tag.find_parent("h3").find_next_sibling("div", class_="gse_alrt_sni")
+        snippet = snippet_tag.get_text(strip=True) if snippet_tag else ""
+        articles.append({"title_en": title_en, "url": url, "snippet": snippet})
+
+    logging.info(f"📄 이메일에서 {len(articles)}개의 논문을 찾았습니다.")
+    return keyword, articles
 
 
 def get_gmail_service():
@@ -68,7 +110,9 @@ def get_gmail_service():
                 logging.error(f"'{CREDENTIALS_PATH}' 파일을 찾을 수 없습니다.")
                 return None
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+            # WSL/Docker 환경과의 호환성을 위해 로컬 서버 대신 콘솔 기반 인증을 사용합니다.
+            # 사용자가 직접 URL을 복사하고 인증 코드를 붙여넣어야 합니다.
+            creds = flow.run_console()
             with open(TOKEN_PATH, "w") as token:
                 token.write(creds.to_json())
 

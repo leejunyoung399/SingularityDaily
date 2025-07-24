@@ -3,51 +3,9 @@ import base64
 import re
 from . import config
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google.auth.exceptions import RefreshError
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from .common_utils import get_gmail_service
 
-# If modifying these scopes, delete token.json.
-SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
-TOKEN_PATH = config.PROJECT_ROOT / "token.json"
-CREDENTIALS_PATH = config.PROJECT_ROOT / "credentials.json"
-
-def get_gmail_service():
-    """Gmail API 서비스 객체를 인증하고 반환합니다."""
-    creds = None
-    if TOKEN_PATH.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
-    
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            try:
-                creds.refresh(Request())
-            except RefreshError as e:
-                print(f"Token has been revoked or expired, please re-authenticate: {e}")
-                TOKEN_PATH.unlink() # Delete expired token
-                return get_gmail_service() # Retry
-        else:
-            if not CREDENTIALS_PATH.exists():
-                print(f"Error: credentials.json not found at {CREDENTIALS_PATH}")
-                print("Please download it from Google Cloud Console and place it in the project root.")
-                return None
-            flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_PATH), SCOPES)
-            creds = flow.run_local_server(port=0)
-        
-        # Save the credentials for the next run
-        with open(TOKEN_PATH, 'w') as token:
-            token.write(creds.to_json())
-
-    try:
-        service = build('gmail', 'v1', credentials=creds)
-        return service
-    except HttpError as error:
-        print(f'An error occurred: {error}')
-        return None
 
 def get_links_from_gmail():
     """읽지 않은 모든 이메일을 검색하고 본문에서 URL을 추출합니다."""
