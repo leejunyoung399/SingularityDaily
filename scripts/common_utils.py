@@ -11,6 +11,12 @@ from io import BytesIO
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs
 
+# Gmail 인증을 위한 추가 import
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
 # .env 파일에서 환경 변수 로드
 load_dotenv()
 
@@ -174,3 +180,63 @@ def is_duplicate_md(filepath, original_title):
 def safe_filename(text, max_length=80):
     text = re.sub(r"[\\/:*?\"<>|]", "", text)
     return text.strip()[:max_length]
+
+
+def get_gmail_service():
+    """
+    Gmail API와 인증하고 서비스 객체를 반환합니다.
+    로컬과 서버 환경 모두에서 토큰 생성, 검증, 갱신을 처리하는 중앙 함수입니다.
+    """
+    creds = None
+    TOKEN_PATH = "token.json"
+    CREDENTIALS_PATH = "credentials.json"
+    SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
+
+    if os.path.exists(TOKEN_PATH):
+        try:
+            creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+        except Exception as e:
+            logging.error(f"{TOKEN_PATH}에서 인증 정보를 불러오는 데 실패했습니다: {e}")
+            creds = None
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            logging.info("만료된 Gmail API 토큰을 갱신합니다...")
+            try:
+                creds.refresh(Request())
+                # Render 환경이 아닐 때만 (즉, 로컬에서) 토큰 파일 갱신
+                if not os.getenv("RENDER"):
+                    with open(TOKEN_PATH, "w") as token:
+                        token.write(creds.to_json())
+            except Exception as e:
+                logging.error(f"토큰 갱신에 실패했습니다. 재인증이 필요할 수 있습니다. 오류: {e}")
+                creds = None
+        else:
+            # 서버 환경에서는 자동 인증 흐름을 시도하지 않고 에러를 명확히 보고
+            if os.getenv("RENDER"):
+                logging.error("CRITICAL: 서버에서 Gmail 인증에 실패했습니다.")
+                logging.error("CRITICAL: 'refresh_token'이 포함된 유효한 'token.json'을 Secret File로 제공해야 합니다.")
+                return None
+            
+            # 로컬 환경에서만 실행되는 인증 흐름
+            logging.info("새로운 Gmail API 사용자 인증을 시작합니다...")
+            if not os.path.exists(CREDENTIALS_PATH):
+                logging.error(f"CRITICAL: '{CREDENTIALS_PATH}' 파일을 찾을 수 없습니다.")
+                return None
+            
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
+            creds = flow.run_console()
+            with open(TOKEN_PATH, "w") as token:
+                token.write(creds.to_json())
+
+    if not creds:
+        logging.error("Gmail API에 대한 유효한 인증 정보를 얻지 못했습니다.")
+        return None
+
+    try:
+        service = build("gmail", "v1", credentials=creds)
+        logging.info("✅ Gmail 서비스가 성공적으로 생성되었습니다.")
+        return service
+    except Exception as e:
+        logging.error(f"Gmail 서비스 빌드에 실패했습니다: {e}")
+        return None
