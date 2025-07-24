@@ -20,7 +20,7 @@ RSS_FEEDS = {
     "AGI": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2707178187233880419",
     "AI drug discovery": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2271409061188943971",
     "Anti-aging therapeutics": "https://www.google.co.kr/alerts/feeds/14276058857012603250/1502131717617198121",
-    "Cellular reprograming": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2481308844339361893",
+    "Cellular reprogramming": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2481308844339361893",
     "Longevity research": "https://www.google.co.kr/alerts/feeds/14276058857012603250/9706346182581700369",
     "nanobot": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2271409061188945116",
     "NMN": "https://www.google.co.kr/alerts/feeds/14276058857012603250/1502131717617199599",
