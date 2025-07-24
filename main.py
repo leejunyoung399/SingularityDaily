@@ -2,7 +2,9 @@ import logging
 import sys
 
 # 각 스크립트의 메인 함수를 import 합니다.
-# 'scripts.main'은 일반 기사 수집, 'process_scholar_email'은 논문 수집, 'generate_nav'는 내비게이션 생성입니다.
+# - collect_from_rss: 일반 RSS 피드에서 '기사'를 수집합니다.
+# - collect_from_gmail: Google Alerts RSS에서 '키워드'별 기사를 수집합니다.
+# - process_scholar_email: Google Scholar 이메일에서 '논문'을 수집합니다.
 from scripts import collect_from_rss as general_articles_collector
 from scripts import collect_from_gmail as google_alerts_collector
 from scripts import process_scholar_email as scholar_collector
