@@ -3,7 +3,7 @@ import sys
 
 # 각 스크립트의 메인 함수를 import 합니다.
 # 'scripts.main'은 일반 기사 수집, 'process_scholar_email'은 논문 수집, 'generate_nav'는 내비게이션 생성입니다.
-from scripts import main as general_articles_collector
+from scripts import collect_from_gmail as general_articles_collector
 from scripts import process_scholar_email as scholar_collector
 from scripts import generate_nav as nav_generator
 
@@ -29,7 +29,7 @@ def run_task(name, task_function):
 if __name__ == "__main__":
     # 실행할 작업 목록 정의
     tasks = [
-        ("일반 기사 수집", general_articles_collector.run),
+        ("Google Alerts RSS 기사 수집", general_articles_collector.main),
         ("Google Scholar 논문 수집", scholar_collector.main),
         ("내비게이션 생성", nav_generator.main),
     ]

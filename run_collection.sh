@@ -9,11 +9,9 @@ echo "--- 데이터 수집을 시작합니다 ---"
 git config --global user.name "Render Cron Bot"
 git config --global user.email "render-bot@users.noreply.github.com"
 
-# 파이썬 스크립트들을 순서대로 실행합니다.
-python -m scripts.collect_from_gmail
-python -m scripts.process_scholar_email
-python -m scripts.generate_nav
-
+# 단일 진입점 파이썬 스크립트를 실행하여 모든 데이터 수집 및 처리 작업을 조율합니다.
+python main.py
+ 
 # git status --porcelain: 변경된 파일이 없으면 출력이 비어있습니다.
 if [[ -z $(git status --porcelain) ]]; then
   echo "--- 새로운 콘텐츠가 없습니다. 종료합니다. ---"
