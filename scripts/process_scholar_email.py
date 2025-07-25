@@ -12,7 +12,7 @@ from .common_utils import (
     clean_google_url,
     fetch_article_body,
     get_gmail_service,
-    is_duplicate_md,
+    get_existing_english_titles_from_dir,
     safe_filename,
     translate_text,
     summarize_and_translate_body,
@@ -82,35 +82,9 @@ def parse_scholar_email(msg):
     logging.info(f"📄 이메일에서 {len(articles)}개의 논문을 찾았습니다.")
     return keyword, articles
 
-
-def get_existing_titles(keyword):
-    """키워드 디렉토리에서 기존에 저장된 모든 논문의 원본 제목 set을 가져옵니다."""
-    titles = set()
-    folder = os.path.join(PAPERS_OUTPUT_DIR, keyword)
-    if not os.path.exists(folder):
-        return titles
-
-    for filename in os.listdir(folder):
-        if filename.endswith(".md"):
-            filepath = os.path.join(folder, filename)
-            try:
-                with open(filepath, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    match = re.search(r"\*\*원제목:\*\*\s*(.*)", content)
-                    if match:
-                        titles.add(match.group(1).strip())
-            except Exception as e:
-                logging.warning(f"기존 파일 읽기 오류 {filepath}: {e}")
-    return titles
-
-
-def save_paper_markdown(keyword, title_ko, title_en, summary_ko, url, existing_titles):
-    """논문 요약을 마크다운 파일로 저장하고 중복을 확인합니다."""
+def save_paper_markdown(keyword, title_ko, title_en, summary_ko, url):
+    """논문 요약을 마크다운 파일로 저장합니다."""
     try:
-        if title_en in existing_titles:
-            logging.info(f"🚫 중복 논문: {title_en}")
-            return
-
         safe_title = safe_filename(title_ko)
         folder = os.path.join(PAPERS_OUTPUT_DIR, keyword)
         os.makedirs(folder, exist_ok=True)
@@ -122,11 +96,11 @@ def save_paper_markdown(keyword, title_ko, title_en, summary_ko, url, existing_t
             f.write(f"**요약:** {summary_ko}\n\n")
             f.write(f"[원문 링크]({url})\n")
         logging.info(f"✅ 저장 완료: {path}")
-        existing_titles.add(title_en)  # 처리된 목록에 추가
+        return True
 
     except Exception as e:
         logging.error(f"파일 저장 중 오류 발생 ({title_en}): {e}")
-
+        return False
 
 def load_seen_ids():
     """처리된 이메일 ID 목록을 불러옵니다."""
@@ -146,6 +120,11 @@ def process_paper_entry(article, keyword, existing_titles):
     """개별 논문 항목을 처리, 번역, 저장합니다."""
     try:
         title_en, link_url, snippet = article["title_en"], article["url"], article["snippet"]
+
+        if title_en in existing_titles:
+            logging.info(f"🚫 중복 논문: {title_en}")
+            return False
+
         logging.info(f"--- ⚙️ 처리 시작: {title_en} ---")
 
         link = clean_google_url(link_url)
@@ -161,15 +140,20 @@ def process_paper_entry(article, keyword, existing_titles):
         # 3. 본문과 스니펫이 모두 비어있으면 건너뜁니다.
         if not body or not body.strip():
             logging.warning(f"본문/스니펫이 모두 비어있어 건너뜁니다: {title_en}")
-            return
+            return False
 
         title_ko, summary_ko = translate_text(title_en), summarize_and_translate_body(body)
-        if title_ko and summary_ko:
-            save_paper_markdown(keyword, title_ko, title_en, summary_ko, link, existing_titles)
-        else:
+        if not title_ko or not summary_ko:
             logging.error(f"번역 실패: {title_en}")
+            return False
+        
+        if save_paper_markdown(keyword, title_ko, title_en, summary_ko, link):
+            existing_titles.add(title_en)
+            return True
+        return False
     except Exception as e:
         logging.error(f"논문 처리 중 오류 발생 ({article.get('title_en', 'N/A')}): {e}")
+        return False
 
 def main():
     try:
@@ -197,6 +181,7 @@ def main():
 
     logging.info(f"총 {len(messages)}개의 새 알리미 메일을 발견했습니다.")
     seen_ids = load_seen_ids()
+    successful_saves = 0
     all_paper_tasks = []
     existing_titles_cache = {}  # 키워드별 기존 제목 캐시
 
@@ -214,7 +199,8 @@ def main():
 
         # 캐시를 사용하여 동일한 키워드에 대해 파일 시스템을 반복적으로 읽는 것을 방지합니다.
         if keyword not in existing_titles_cache:
-            existing_titles_cache[keyword] = get_existing_titles(keyword)
+            keyword_dir = os.path.join(PAPERS_OUTPUT_DIR, keyword)
+            existing_titles_cache[keyword] = get_existing_english_titles_from_dir(keyword_dir)
 
         for article in articles:
             all_paper_tasks.append((article, keyword, existing_titles_cache[keyword]))
@@ -233,10 +219,12 @@ def main():
                 count += 1
                 logging.info(f"  - 논문 진행률: {count}/{total} 처리 완료...")
                 try:
-                    future.result()
+                    if future.result() is True:
+                        successful_saves += 1
                 except Exception as exc:
                     logging.error(f"논문 처리 중 예외 발생: {exc}")
 
+    logging.info(f"========== Google Scholar 수집 종료: 총 {successful_saves}개의 새 논문을 저장했습니다. ==========\n")
     save_seen_ids(seen_ids)
 
 

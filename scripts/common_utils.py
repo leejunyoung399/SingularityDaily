@@ -167,15 +167,24 @@ def fetch_article_body(url, max_length=4000):
         logging.error(f"본문 크롤 중 예측하지 못한 오류 발생: {url}: {e}", exc_info=False)
         return None
 
-def is_duplicate_md(filepath, original_title):
-    if not os.path.exists(filepath):
-        return False
-    try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
-            return original_title in content
-    except:
-        return False
+def get_existing_english_titles_from_dir(directory):
+    """디렉토리에서 기존에 저장된 모든 콘텐츠의 원본 영어 제목 set을 가져옵니다."""
+    titles = set()
+    if not os.path.exists(directory):
+        return titles
+
+    for filename in os.listdir(directory):
+        if filename.endswith(".md"):
+            filepath = os.path.join(directory, filename)
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    match = re.search(r"\*\*원제목:\*\*\s*(.*)", content)
+                    if match:
+                        titles.add(match.group(1).strip())
+            except Exception as e:
+                logging.warning(f"기존 파일 읽기 오류 {filepath}: {e}")
+    return titles
 
 def safe_filename(text, max_length=80):
     text = re.sub(r"[\\/:*?\"<>|]", "", text)

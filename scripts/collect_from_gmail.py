@@ -9,7 +9,7 @@ from .common_utils import (
     strip_html_tags,
     fetch_article_body,
     safe_filename,
-    is_duplicate_md,
+    get_existing_english_titles_from_dir,
     translate_text,
     summarize_and_translate_body,
     initialize_gemini,
@@ -31,17 +31,13 @@ logging.basicConfig(
     ]
 )
 
-def save_markdown(keyword, title_ko, title_en, summary_ko, url):
-    """마크다운 파일을 저장하고, 중복을 확인합니다."""
+def save_markdown(keyword, title_ko, title_en, summary_ko, url, existing_titles):
+    """마크다운 파일을 저장합니다."""
     try:
         safe_title = safe_filename(title_ko)
         folder = os.path.join(OUTPUT_DIR, keyword)
         os.makedirs(folder, exist_ok=True)
         path = os.path.join(folder, f"{safe_title}.md")
-
-        if is_duplicate_md(path, title_en):
-            logging.info(f"🚫 중복 기사: {title_en}")
-            return False
 
         with open(path, "w", encoding="utf-8") as f:
             f.write(f"# {title_ko}\n\n")
@@ -51,10 +47,10 @@ def save_markdown(keyword, title_ko, title_en, summary_ko, url):
         logging.info(f"✅ 저장 완료: {path}")
         return True
     except Exception as e:
-        logging.error(f"파일 저장 중 오류 발생 ({title_en}): {e}")
+        logging.error(f"파일 저장 중 오류 발생 ({title_en}): {e}", exc_info=True)
         return False
 
-def process_entry(entry, keyword):
+def process_entry(entry, keyword, existing_titles):
     """개별 RSS 항목을 처리합니다."""
     try:
         raw_title = entry.get("title", "")
@@ -62,9 +58,13 @@ def process_entry(entry, keyword):
         link = clean_google_url(raw_link)
         title_en = strip_html_tags(raw_title)
 
+        if title_en in existing_titles:
+            logging.info(f"🚫 중복 기사: {title_en}")
+            return False
+
         if not title_en or not link:
             logging.warning("제목 또는 링크가 없는 항목을 건너뜁니다.")
-            return
+            return False
 
         # 본문 먼저 추출 후 필터
         body = fetch_article_body(link)
@@ -72,11 +72,11 @@ def process_entry(entry, keyword):
         # 본문 추출 실패 시 처리
         if not body:
             logging.info(f"⚠️ 본문 추출 실패 — 저장하지 않음: {title_en}")
-            return
+            return False
         # 본문이 너무 짧을 경우 처리
         if len(body.strip()) < MIN_BODY_LENGTH:
             logging.info(f"⚠️ 본문 부족({len(body.strip())}자) — 저장하지 않음: {title_en}")
-            return
+            return False
 
         # 번역 수행 (비용 발생)
         title_ko = translate_text(title_en)
@@ -84,12 +84,16 @@ def process_entry(entry, keyword):
         
         if not title_ko or not summary_ko:
             logging.error(f"번역 실패: {title_en}")
-            return
+            return False
 
-        save_markdown(keyword, title_ko, title_en, summary_ko, link)
+        if save_markdown(keyword, title_ko, title_en, summary_ko, link, existing_titles):
+            existing_titles.add(title_en)
+            return True
+        return False
 
     except Exception as e:
-        logging.error(f"항목 처리 중 오류 발생 ({entry.get('title', 'N/A')}): {e}")
+        logging.error(f"항목 처리 중 오류 발생 ({entry.get('title', 'N/A')}): {e}", exc_info=True)
+        return False
 
 def main():
     """모든 RSS 피드를 순회하며 기사를 수집하고 저장합니다."""
@@ -97,8 +101,13 @@ def main():
         initialize_gemini()
     except (ValueError, RuntimeError) as e:
         logging.error(f"스크립트 실행 중단: {e}")
-        # CI/CD 환경에서 실패를 명확히 알리기 위해 0이 아닌 코드로 종료
         exit(1)
+
+    existing_titles_cache = {}
+    for keyword in config.GOOGLE_ALERTS_RSS_FEEDS.keys():
+        keyword_dir = os.path.join(OUTPUT_DIR, keyword)
+        existing_titles_cache[keyword] = get_existing_english_titles_from_dir(keyword_dir)
+        logging.info(f"기존 '{keyword}' 키워드 {len(existing_titles_cache[keyword])}개의 원제목을 불러왔습니다.")
 
     all_tasks = []
     for keyword, feed_url in config.GOOGLE_ALERTS_RSS_FEEDS.items():
@@ -106,12 +115,11 @@ def main():
         try:
             feed = feedparser.parse(feed_url)
             if feed.bozo:
-                # bozo가 1이면 피드 파싱에 문제가 있을 수 있음을 의미
                 logging.warning(f"'{keyword}' 피드 파싱 문제: {feed.bozo_exception}")
 
             entries = feed.entries[:MAX_ENTRIES_PER_FEED]
             for entry in entries:
-                all_tasks.append((entry, keyword))
+                all_tasks.append((entry, keyword, existing_titles_cache[keyword]))
         except Exception as e:
             logging.error(f"'{keyword}' 피드 처리 중 오류 발생: {e}")
 
@@ -121,23 +129,23 @@ def main():
 
     logging.info(f"총 {len(all_tasks)}개의 RSS 항목을 병렬로 처리합니다...")
 
-    # max_workers를 5로 설정하여 동시에 5개의 항목을 처리합니다.
-    # 이는 API 속도 제한을 어느 정도 제어하는 효과도 있습니다.
+    successful_saves = 0
     with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_task = {executor.submit(process_entry, task[0], task[1]): task for task in all_tasks}
+        future_to_task = {executor.submit(process_entry, task[0], task[1], task[2]): task for task in all_tasks}
         
         count = 0
         total = len(future_to_task)
         for future in as_completed(future_to_task):
             count += 1
             logging.info(f"  - RSS 진행률: {count}/{total} 처리 완료...")
-            task = future_to_task[future]
             try:
-                future.result()  # 작업 중 발생한 예외가 있다면 여기서 다시 발생시킵니다.
+                if future.result() is True:
+                    successful_saves += 1
             except Exception as exc:
+                task = future_to_task[future]
                 logging.error(f"항목 처리 중 예외 발생 ({task[0].get('title', 'N/A')}): {exc}")
 
-    logging.info("========== RSS 수집 종료 ==========\n")
+    logging.info(f"========== RSS 수집 종료: 총 {successful_saves}개의 새 키워드 기사를 저장했습니다. ==========\n")
 
 if __name__ == "__main__":
     main()

@@ -3,6 +3,7 @@ import yaml
 import re
 import logging
 import math
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -59,17 +60,28 @@ def create_paginated_index(title, sorted_paths, output_dir):
         page_path.write_text(content, encoding="utf-8")
     logging.info(f"✅ '{title}' 섹션에 {total_pages}개의 페이지 생성 완료.")
 
+def get_file_commit_date(path):
+    """Git 로그를 사용하여 파일의 마지막 커밋 날짜(타임스탬프)를 가져옵니다."""
+    try:
+        # --format=%ct는 커밋 시간을 유닉스 타임스탬프로 출력합니다.
+        cmd = ['git', 'log', '-1', '--format=%ct', '--', str(path)]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=PROJECT_ROOT)
+        return int(result.stdout.strip())
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        # Git 명령이 실패하면 파일 수정 시간을 대체 값으로 사용합니다.
+        return os.path.getmtime(path)
+
 def process_directory(path, title, is_recursive=False):
     """디렉토리를 처리하여 페이지네이션된 인덱스를 생성하고, 내비게이션 경로를 반환합니다."""
     if not path.exists() or not path.is_dir():
         return None
 
     all_md_paths = [p for p in path.glob("*.md") if p.name != "index.md"]
-
     if not all_md_paths:
         return None
 
-    all_md_paths.sort(key=os.path.getmtime, reverse=True)
+    # 파일 수정 시간 대신, Git 커밋 시간을 기준으로 정렬합니다.
+    all_md_paths.sort(key=get_file_commit_date, reverse=True)
     create_paginated_index(title, all_md_paths, path)
     
     # 좌측 메뉴에는 최상위 인덱스 파일만 연결합니다.
