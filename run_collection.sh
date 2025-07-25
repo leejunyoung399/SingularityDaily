@@ -40,8 +40,8 @@ else
   git add .
   
   # 변경된 파일 수를 계산하여 커밋 메시지에 포함합니다.
-  ADDED_COUNT=$(git status --porcelain | grep -c "^A")
-  MODIFIED_COUNT=$(git status --porcelain | grep -c "^M")
+  ADDED_COUNT=$(git status --porcelain | grep "^A" | wc -l)
+  MODIFIED_COUNT=$(git status --porcelain | grep "^M" | wc -l)
   
   # 변경 내용을 커밋합니다.
   git commit -m "docs: 자동 수집 콘텐츠 업데이트 (추가: ${ADDED_COUNT}, 수정: ${MODIFIED_COUNT})"
