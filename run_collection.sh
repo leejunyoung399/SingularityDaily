@@ -9,6 +9,14 @@ cd "$(dirname "$0")"
 
 echo "--- 데이터 수집을 시작합니다 ---"
 
+# Render는 detached HEAD 상태에서 실행될 수 있으므로, main 브랜치를 명시적으로 체크아웃합니다.
+echo "--- main 브랜치를 체크아웃합니다. ---"
+git checkout main
+
+# GitHub의 최신 변경사항을 먼저 가져와서 병합(merge)합니다.
+echo "--- GitHub과 동기화 중... ---"
+git pull
+
 # Git 사용자 정보를 설정합니다. (커밋 작성자 정보)
 git config --global user.name "Render Cron Bot"
 git config --global user.email "render-bot@users.noreply.github.com"

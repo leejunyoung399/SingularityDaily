@@ -27,11 +27,12 @@ RSS_FEEDS = [    "https://www.technologyreview.com/feed/",
     "https://longevity.technology/feed/",
     "https://www.kurzweilai.net/news/feed",
     "https://spectrum.ieee.org/rss/robotics",
-    "https://www.fightaging.org/rss.xml",
-    "https://www.futuretimeline.net/blog/rss.xml",
+    "https://www.fightaging.org/feed/", # 알려주신 새 주소로 변경
     "https://nautil.us/feed/",
-    "https://www.neurotechreports.com/rss.xml",
-    "https://a16z.com/feed/",
+    # 아래 피드들은 지속적으로 파싱 오류를 일으키므로, 로그 정리를 위해 임시 비활성화합니다.
+    # "https://www.futuretimeline.net/blog/rss.xml",
+    # "https://www.neurotechreports.com/rss.xml",
+    # "https://a16z.com/feed/",
     "https://the-decoder.com/feed/",
 ]
 

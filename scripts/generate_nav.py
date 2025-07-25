@@ -2,6 +2,7 @@ import os
 import yaml
 import re
 from datetime import datetime
+import logging
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -34,7 +35,7 @@ def group_files_by_date(file_paths):
             # 최종 변환 전, 파일 경로 객체를 그대로 추가합니다.
             grouped[year][month].append(file_path)
         except Exception as e:
-            print(f"경고: 파일 처리 중 오류 발생 {file_path}: {e}")
+            logging.warning(f"파일 처리 중 오류 발생 {file_path}: {e}")
     
     # 각 월별로 파일을 수정 시간순으로 정렬하고, 최종 형식으로 변환합니다.
     for year in grouped:
@@ -161,12 +162,17 @@ def write_mkdocs_yml(sections):
     with open(output_path, "w", encoding="utf-8") as f:
         yaml.dump(config, f, allow_unicode=True, sort_keys=False, width=1000)
 
-    print(f"✅ '{output_path}' 파일이 성공적으로 생성/업데이트되었습니다.")
+    logging.info(f"✅ '{output_path}' 파일이 성공적으로 생성/업데이트되었습니다.")
 
 def main():
-    print("🔍 'docs' 폴더를 스캔하여 내비게이션 구조를 생성합니다...")
+    logging.info("🔍 'docs' 폴더를 스캔하여 내비게이션 구조를 생성합니다...")
     sections = collect_markdown_files()
     write_mkdocs_yml(sections)
 
 if __name__ == "__main__":
+    # 이 스크립트가 직접 실행될 때를 위한 기본 로깅 설정
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
     main()
