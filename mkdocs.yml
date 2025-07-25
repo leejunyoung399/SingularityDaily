@@ -29,13 +29,29 @@ nav:
 - 기사: articles/index.md
 - 키워드:
   - AGI: keywords/AGI/index.md
+  - AGI - 새로운 결과: keywords/AGI - 새로운 결과/index.md
   - AI drug discovery: keywords/AI drug discovery/index.md
+  - AI drug discovery - 새로운 결과: keywords/AI drug discovery - 새로운 결과/index.md
   - Anti-aging therapeutics: keywords/Anti-aging therapeutics/index.md
+  - Anti-aging therapeutics - 새로운 결과: keywords/Anti-aging therapeutics - 새로운 결과/index.md
   - Cellular reprogramming: keywords/Cellular reprogramming/index.md
+  - Cellular reprogramming - 새로운 결과: keywords/Cellular reprogramming - 새로운 결과/index.md
   - Humanoid Robot: keywords/Humanoid Robot/index.md
   - Longevity research: keywords/Longevity research/index.md
+  - Longevity research - 새로운 결과: keywords/Longevity research - 새로운 결과/index.md
   - NMN: keywords/NMN/index.md
+<<<<<<< HEAD
   - Nanobot: keywords/Nanobot/index.md
+=======
+  - NMN - 새로운 결과: keywords/NMN - 새로운 결과/index.md
+>>>>>>> 5d6c35669484cc5863fe3e5342831c6b75113ad6
   - Rapamycin: keywords/Rapamycin/index.md
+  - Rapamycin - 새로운 결과: keywords/Rapamycin - 새로운 결과/index.md
   - Senolytics: keywords/Senolytics/index.md
+  - Senolytics - 새로운 결과: keywords/Senolytics - 새로운 결과/index.md
   - Telomere extension: keywords/Telomere extension/index.md
+<<<<<<< HEAD
+=======
+  - Telomere extension - 새로운 결과: keywords/Telomere extension - 새로운 결과/index.md
+  - nanobot: keywords/nanobot/index.md
+>>>>>>> 5d6c35669484cc5863fe3e5342831c6b75113ad6
