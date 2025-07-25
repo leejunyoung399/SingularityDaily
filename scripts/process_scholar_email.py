@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import base64
+import threading
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -116,14 +117,12 @@ def save_seen_ids(ids):
         json.dump(list(ids), f)
 
 
-def process_paper_entry(article, keyword, existing_titles):
+def process_paper_entry(article, keyword, existing_titles, lock):
     """개별 논문 항목을 처리, 번역, 저장합니다."""
     try:
         title_en, link_url, snippet = article["title_en"], article["url"], article["snippet"]
 
-        if title_en in existing_titles:
-            logging.info(f"🚫 중복 논문: {title_en}")
-            return False
+        logging.info(f"--- ⚙️ 처리 시작: {title_en} ---")
 
         logging.info(f"--- ⚙️ 처리 시작: {title_en} ---")
 
@@ -131,6 +130,12 @@ def process_paper_entry(article, keyword, existing_titles):
 
         # 1. 본문 추출을 먼저 시도합니다.
         body = fetch_article_body(link)
+
+        with lock:
+            if title_en in existing_titles:
+                logging.info(f"🚫 중복 논문: {title_en}")
+                return False
+            existing_titles.add(title_en)
 
         # 2. 본문 추출에 실패했거나 내용이 너무 짧으면, 이메일의 스니펫을 대체재로 사용합니다.
         if not body or len(body.strip()) < MIN_BODY_LENGTH:
@@ -148,8 +153,7 @@ def process_paper_entry(article, keyword, existing_titles):
             return False
         
         if save_paper_markdown(keyword, title_ko, title_en, summary_ko, link):
-            existing_titles.add(title_en)
-            return True
+            return True # 제목은 이미 목록에 추가되었습니다.
         return False
     except Exception as e:
         logging.error(f"논문 처리 중 오류 발생 ({article.get('title_en', 'N/A')}): {e}")
@@ -201,9 +205,10 @@ def main():
         if keyword not in existing_titles_cache:
             keyword_dir = os.path.join(PAPERS_OUTPUT_DIR, keyword)
             existing_titles_cache[keyword] = get_existing_english_titles_from_dir(keyword_dir)
+    lock = threading.Lock()
 
-        for article in articles:
-            all_paper_tasks.append((article, keyword, existing_titles_cache[keyword]))
+    for article in articles:
+        all_paper_tasks.append((article, keyword, existing_titles_cache[keyword], lock))
 
         # 처리가 끝난 메일은 '읽음'으로 표시하고, seen 목록에 추가
         service.users().messages().modify(userId="me", id=msg_id, body={"removeLabelIds": ["UNREAD"]}).execute()
@@ -212,7 +217,7 @@ def main():
     if all_paper_tasks:
         logging.info(f"총 {len(all_paper_tasks)}개의 논문 항목을 병렬로 처리합니다...")
         with ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_task = {executor.submit(process_paper_entry, task[0], task[1], task[2]): task for task in all_paper_tasks}
+            future_to_task = {executor.submit(process_paper_entry, task[0], task[1], task[2], task[3]): task for task in all_paper_tasks}
             count = 0
             total = len(future_to_task)
             for future in as_completed(future_to_task):

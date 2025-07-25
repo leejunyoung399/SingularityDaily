@@ -60,28 +60,49 @@ def create_paginated_index(title, sorted_paths, output_dir):
         page_path.write_text(content, encoding="utf-8")
     logging.info(f"✅ '{title}' 섹션에 {total_pages}개의 페이지 생성 완료.")
 
-def get_file_commit_date(path):
-    """Git 로그를 사용하여 파일의 마지막 커밋 날짜(타임스탬프)를 가져옵니다."""
+def get_all_commit_dates(root_path):
+    """Git 로그를 한 번만 실행하여 모든 파일의 마지막 커밋 날짜를 효율적으로 수집합니다."""
+    logging.info(f"Git 커밋 기록을 스캔하여 파일 날짜를 수집합니다... (시간이 걸릴 수 있습니다)")
+    file_dates = {}
     try:
-        # --format=%ct는 커밋 시간을 유닉스 타임스탬프로 출력합니다.
-        cmd = ['git', 'log', '-1', '--format=%ct', '--', str(path)]
+        # --pretty=format:commit %ct: 각 커밋을 'commit' 키워드와 타임스탬프로 시작
+        # --name-only: 각 커밋에 포함된 파일 목록만 표시
+        cmd = ['git', 'log', '--pretty=format:commit %ct', '--name-only', '--', str(root_path)]
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=PROJECT_ROOT)
-        return int(result.stdout.strip())
-    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
-        # Git 명령이 실패하면 파일 수정 시간을 대체 값으로 사용합니다.
-        return os.path.getmtime(path)
+        
+        # 'commit '을 기준으로 출력을 분리하여 각 커밋을 처리
+        for commit_block in result.stdout.strip().split('commit '):
+            if not commit_block:
+                continue
+            
+            lines = commit_block.strip().split('\n')
+            try:
+                commit_date = int(lines[0])
+                # 두 번째 줄부터 파일 경로
+                for file_path_str in lines[1:]:
+                    full_path = PROJECT_ROOT / file_path_str.strip()
+                    # git log는 최신순이므로, 파일이 맵에 없으면 추가 (가장 최신 커밋 날짜)
+                    if full_path not in file_dates:
+                        file_dates[full_path] = commit_date
+            except (ValueError, IndexError):
+                continue
+        logging.info(f"✅ {len(file_dates)}개의 파일에 대한 커밋 날짜를 수집했습니다.")
+        return file_dates
+    except Exception as e:
+        logging.error(f"Git 커밋 날짜 수집 중 오류 발생: {e}. 파일 수정 시간으로 대체합니다.")
+        return {}
 
-def process_directory(path, title, is_recursive=False):
+def process_directory(path, title, commit_date_map, is_recursive=False):
     """디렉토리를 처리하여 페이지네이션된 인덱스를 생성하고, 내비게이션 경로를 반환합니다."""
     if not path.exists() or not path.is_dir():
         return None
 
-    all_md_paths = [p for p in path.glob("*.md") if p.name != "index.md"]
+    all_md_paths = [p for p in path.glob("*.md") if p.name != "index.md" and not p.name.startswith("page-")]
     if not all_md_paths:
         return None
 
-    # 파일 수정 시간 대신, Git 커밋 시간을 기준으로 정렬합니다.
-    all_md_paths.sort(key=get_file_commit_date, reverse=True)
+    # 최적화: 미리 계산된 맵에서 커밋 날짜를 조회하여 정렬합니다.
+    all_md_paths.sort(key=lambda p: commit_date_map.get(p, os.path.getmtime(p)), reverse=True)
     create_paginated_index(title, all_md_paths, path)
     
     # 좌측 메뉴에는 최상위 인덱스 파일만 연결합니다.
@@ -90,15 +111,19 @@ def process_directory(path, title, is_recursive=False):
 def main():
     """스크립트의 메인 실행 함수."""
     logging.info("🔍 'docs' 폴더를 스캔하여 내비게이션 구조를 생성합니다...")
+    
+    # 최적화: 스크립트 시작 시 모든 파일의 커밋 날짜를 한 번에 수집합니다.
+    commit_date_map = get_all_commit_dates(DOCS_ROOT)
+    
     sections = {}
 
     # '기사' 섹션 처리
-    articles_index = process_directory(DOCS_ROOT / "articles", "기사")
+    articles_index = process_directory(DOCS_ROOT / "articles", "기사", commit_date_map)
     if articles_index:
         sections['기사'] = articles_index
 
     # '블로그' 섹션 처리
-    blog_index = process_directory(DOCS_ROOT / "blog", "블로그")
+    blog_index = process_directory(DOCS_ROOT / "blog", "블로그", commit_date_map)
     if blog_index:
         sections['블로그'] = blog_index
 
@@ -109,7 +134,7 @@ def main():
         all_keyword_dirs = [d for d in sorted(keywords_path.iterdir()) if d.is_dir()]
         for keyword_dir in all_keyword_dirs:
             # 각 키워드 폴더를 개별적으로 처리합니다.
-            keyword_index = process_directory(keyword_dir, f"{keyword_dir.name} 관련 글")
+            keyword_index = process_directory(keyword_dir, f"{keyword_dir.name} 관련 글", commit_date_map)
             if keyword_index:
                 keyword_entries[keyword_dir.name] = keyword_index
         if keyword_entries:
@@ -144,7 +169,6 @@ def write_mkdocs_yml(sections):
             {"toc": {"permalink": "¶"}},
             "footnotes",
             "meta",
-            "attr_list", # 링크에 속성을 추가할 수 있도록 활성화
         ],
         "extra_css": ["stylesheets/extra.css"],
         "plugins": ["search"],

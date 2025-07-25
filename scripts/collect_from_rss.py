@@ -2,6 +2,7 @@
 import os
 import feedparser
 import logging
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .common_utils import (
     strip_html_tags,
@@ -28,7 +29,7 @@ logging.basicConfig(
     ]
 )
 
-def save_markdown(title_ko, title_en, summary_ko, url, existing_titles):
+def save_markdown(title_ko, title_en, summary_ko, url):
     """마크다운 파일을 저장하고, 중복을 확인합니다."""
     try:
         safe_title = safe_filename(title_ko)
@@ -46,20 +47,21 @@ def save_markdown(title_ko, title_en, summary_ko, url, existing_titles):
         logging.error(f"파일 저장 중 오류 발생 ({title_en}): {e}", exc_info=True)
         return False
 
-def process_entry(entry, existing_titles):
+def process_entry(entry, existing_titles, lock):
     """개별 RSS 항목을 처리합니다."""
     try:
         title_en = strip_html_tags(entry.get("title", ""))
         link = entry.get("link", "")
 
-        # 번역 전에 원제목으로 중복 확인
-        if title_en in existing_titles:
-            logging.info(f"🚫 중복 기사: {title_en}")
-            return False
-
         if not title_en or not link:
             logging.warning("제목 또는 링크가 없는 항목을 건너뜁니다.")
             return False
+
+        with lock:
+            if title_en in existing_titles:
+                logging.info(f"🚫 중복 기사: {title_en}")
+                return False
+            existing_titles.add(title_en)
 
         body = fetch_article_body(link)
 
@@ -74,9 +76,8 @@ def process_entry(entry, existing_titles):
             logging.error(f"번역 실패: {title_en}")
             return False
 
-        if save_markdown(title_ko, title_en, summary_ko, link, existing_titles):
-            existing_titles.add(title_en) # 성공적으로 저장되면, 실시간으로 목록에 추가
-            return True
+        if save_markdown(title_ko, title_en, summary_ko, url):
+            return True # 제목은 이미 목록에 추가되었습니다.
         return False
 
     except Exception as e:
@@ -94,6 +95,7 @@ def main():
     # 스크립트 시작 시, 기존에 저장된 모든 기사의 원제목을 미리 불러옵니다.
     existing_titles = get_existing_english_titles_from_dir(OUTPUT_DIR)
     logging.info(f"기존 '기사' {len(existing_titles)}개의 원제목을 불러왔습니다.")
+    lock = threading.Lock()
 
     all_tasks = []
     for feed_url in config.RSS_FEEDS:
@@ -116,8 +118,7 @@ def main():
 
     successful_saves = 0
     with ThreadPoolExecutor(max_workers=5) as executor:
-        # 각 작업에 기존 제목 목록(set)을 전달합니다.
-        future_to_task = {executor.submit(process_entry, task, existing_titles): task for task in all_tasks}
+        future_to_task = {executor.submit(process_entry, task, existing_titles, lock): task for task in all_tasks}
         
         for i, future in enumerate(as_completed(future_to_task), 1):
             logging.info(f"  - 일반 기사 진행률: {i}/{len(all_tasks)} 처리 완료...")

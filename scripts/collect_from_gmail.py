@@ -2,6 +2,7 @@
 import os
 import feedparser
 import logging
+import threading
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .common_utils import (
@@ -31,7 +32,7 @@ logging.basicConfig(
     ]
 )
 
-def save_markdown(keyword, title_ko, title_en, summary_ko, url, existing_titles):
+def save_markdown(keyword, title_ko, title_en, summary_ko, url):
     """마크다운 파일을 저장합니다."""
     try:
         safe_title = safe_filename(title_ko)
@@ -50,7 +51,7 @@ def save_markdown(keyword, title_ko, title_en, summary_ko, url, existing_titles)
         logging.error(f"파일 저장 중 오류 발생 ({title_en}): {e}", exc_info=True)
         return False
 
-def process_entry(entry, keyword, existing_titles):
+def process_entry(entry, keyword, existing_titles, lock):
     """개별 RSS 항목을 처리합니다."""
     try:
         raw_title = entry.get("title", "")
@@ -58,13 +59,15 @@ def process_entry(entry, keyword, existing_titles):
         link = clean_google_url(raw_link)
         title_en = strip_html_tags(raw_title)
 
-        if title_en in existing_titles:
-            logging.info(f"🚫 중복 기사: {title_en}")
-            return False
-
         if not title_en or not link:
             logging.warning("제목 또는 링크가 없는 항목을 건너뜁니다.")
             return False
+
+        with lock:
+            if title_en in existing_titles:
+                logging.info(f"🚫 중복 기사: {title_en}")
+                return False
+            existing_titles.add(title_en)
 
         # 본문 먼저 추출 후 필터
         body = fetch_article_body(link)
@@ -86,9 +89,8 @@ def process_entry(entry, keyword, existing_titles):
             logging.error(f"번역 실패: {title_en}")
             return False
 
-        if save_markdown(keyword, title_ko, title_en, summary_ko, link, existing_titles):
-            existing_titles.add(title_en)
-            return True
+        if save_markdown(keyword, title_ko, title_en, summary_ko, url):
+            return True # 제목은 이미 목록에 추가되었습니다.
         return False
 
     except Exception as e:
@@ -108,6 +110,7 @@ def main():
         keyword_dir = os.path.join(OUTPUT_DIR, keyword)
         existing_titles_cache[keyword] = get_existing_english_titles_from_dir(keyword_dir)
         logging.info(f"기존 '{keyword}' 키워드 {len(existing_titles_cache[keyword])}개의 원제목을 불러왔습니다.")
+    lock = threading.Lock()
 
     all_tasks = []
     for keyword, feed_url in config.GOOGLE_ALERTS_RSS_FEEDS.items():
@@ -119,7 +122,7 @@ def main():
 
             entries = feed.entries[:MAX_ENTRIES_PER_FEED]
             for entry in entries:
-                all_tasks.append((entry, keyword, existing_titles_cache[keyword]))
+                all_tasks.append((entry, keyword, existing_titles_cache[keyword], lock))
         except Exception as e:
             logging.error(f"'{keyword}' 피드 처리 중 오류 발생: {e}")
 
@@ -131,7 +134,7 @@ def main():
 
     successful_saves = 0
     with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_task = {executor.submit(process_entry, task[0], task[1], task[2]): task for task in all_tasks}
+        future_to_task = {executor.submit(process_entry, task[0], task[1], task[2], task[3]): task for task in all_tasks}
         
         count = 0
         total = len(future_to_task)

@@ -19,7 +19,6 @@ markdown_extensions:
     permalink: ¶
 - footnotes
 - meta
-- attr_list
 extra_css:
 - stylesheets/extra.css
 plugins:
@@ -36,7 +35,7 @@ nav:
   - Humanoid Robot: keywords/Humanoid Robot/index.md
   - Longevity research: keywords/Longevity research/index.md
   - NMN: keywords/NMN/index.md
+  - Nanobot: keywords/Nanobot/index.md
   - Rapamycin: keywords/Rapamycin/index.md
   - Senolytics: keywords/Senolytics/index.md
   - Telomere extension: keywords/Telomere extension/index.md
-  - nanobot: keywords/nanobot/index.md

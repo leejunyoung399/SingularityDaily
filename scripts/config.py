@@ -50,7 +50,7 @@ GOOGLE_ALERTS_RSS_FEEDS = {
     "Anti-aging therapeutics": "https://www.google.co.kr/alerts/feeds/14276058857012603250/1502131717617198121",
     "Cellular reprogramming": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2481308844339361893",
     "Longevity research": "https://www.google.co.kr/alerts/feeds/14276058857012603250/9706346182581700369",
-    "nanobot": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2271409061188945116",
+    "Nanobot": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2271409061188945116",
     "NMN": "https://www.google.co.kr/alerts/feeds/14276058857012603250/1502131717617199599",
     "Rapamycin": "https://www.google.co.kr/alerts/feeds/14276058857012603250/2707178187233881309",
     "Senolytics": "https://www.google.co.kr/alerts/feeds/14276058857012603250/1502131717617200498",
