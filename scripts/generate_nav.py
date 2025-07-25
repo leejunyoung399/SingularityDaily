@@ -1,12 +1,14 @@
 import os
 import yaml
 import re
-from datetime import datetime
 import logging
+import math
+from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DOCS_ROOT = PROJECT_ROOT / "docs"
+ITEMS_PER_PAGE = 100  # 페이지당 표시할 항목 수
 
 def shorten_title(title, max_length=60):
     """긴 제목을 자르고, 개행 및 특수문자를 제거합니다."""
@@ -17,160 +19,143 @@ def shorten_title(title, max_length=60):
         title = title[:max_length].rstrip() + "..."
     return title
 
-def group_files_by_date(file_paths):
-    """파일 경로 목록을 수정일을 기준으로 연도와 월별로 그룹화합니다."""
-    grouped = {}
-    for file_path in file_paths:
-        try:
-            mtime = os.path.getmtime(file_path)
-            dt = datetime.fromtimestamp(mtime)
-            year = str(dt.year)
-            month = f"{dt.month:02d}"
+def create_paginated_index(title, sorted_paths, output_dir):
+    """페이지네이션된 인덱스 페이지들을 생성합니다."""
+    if not sorted_paths:
+        return
 
-            if year not in grouped:
-                grouped[year] = {}
-            if month not in grouped[year]:
-                grouped[year][month] = []
+    total_items = len(sorted_paths)
+    total_pages = math.ceil(total_items / ITEMS_PER_PAGE)
 
-            # 최종 변환 전, 파일 경로 객체를 그대로 추가합니다.
-            grouped[year][month].append(file_path)
-        except Exception as e:
-            logging.warning(f"파일 처리 중 오류 발생 {file_path}: {e}")
+    for page_num in range(1, total_pages + 1):
+        start_index = (page_num - 1) * ITEMS_PER_PAGE
+        end_index = start_index + ITEMS_PER_PAGE
+        page_paths = sorted_paths[start_index:end_index]
+
+        content = f"# {title}\n\n"
+        for file_path in page_paths:
+            file_title = file_path.stem
+            relative_link = os.path.relpath(file_path, output_dir)
+            link = str(relative_link).replace("\\", "/")
+            content += f"- [{file_title}]({link})\n"
+        
+        # 페이지네이션 네비게이션 추가
+        content += "\n---\n"
+        nav_links = []
+        if page_num > 1:
+            prev_page_link = "index.md" if page_num == 2 else f"page-{page_num - 1}.md"
+            nav_links.append(f"[<< 이전 페이지]({prev_page_link})")
+        
+        nav_links.append(f"페이지 {page_num} / {total_pages}")
+
+        if page_num < total_pages:
+            next_page_link = f"page-{page_num + 1}.md"
+            nav_links.append(f"[다음 페이지 >>]({next_page_link})")
+        
+        content += "  |  ".join(nav_links)
+
+        page_filename = "index.md" if page_num == 1 else f"page-{page_num}.md"
+        page_path = output_dir / page_filename
+        page_path.write_text(content, encoding="utf-8")
+    logging.info(f"✅ '{title}' 섹션에 {total_pages}개의 페이지 생성 완료.")
+
+def process_directory(path, title, is_recursive=False):
+    """디렉토리를 처리하여 페이지네이션된 인덱스를 생성하고, 내비게이션 경로를 반환합니다."""
+    if not path.exists() or not path.is_dir():
+        return None
+
+    all_md_paths = [p for p in path.glob("*.md") if p.name != "index.md"]
+
+    if not all_md_paths:
+        return None
+
+    all_md_paths.sort(key=os.path.getmtime, reverse=True)
+    create_paginated_index(title, all_md_paths, path)
     
-    # 각 월별로 파일을 수정 시간순으로 정렬하고, 최종 형식으로 변환합니다.
-    for year in grouped:
-        for month in grouped[year]:
-            # 수정 시간(mtime)을 기준으로 내림차순 정렬 (최신 글이 위로)
-            grouped[year][month].sort(key=os.path.getmtime, reverse=True)
-            # 최종 내비게이션 형식으로 변환
-            sorted_files = []
-            for file_path in grouped[year][month]:
-                title = shorten_title(file_path.stem)
-                rel_path = os.path.relpath(file_path, DOCS_ROOT)
-                sorted_files.append({title: str(rel_path).replace("\\", "/")})
-            grouped[year][month] = sorted_files
-    return grouped
+    # 좌측 메뉴에는 최상위 인덱스 파일만 연결합니다.
+    return str(path.relative_to(DOCS_ROOT)).replace("\\", "/") + "/index.md"
 
-def format_grouped_nav(grouped_data):
-    """그룹화된 데이터를 mkdocs 내비게이션 형식으로 변환합니다."""
-    nav = []
-    for year in sorted(grouped_data.keys(), reverse=True):
-        year_content = []
-        for month in sorted(grouped_data[year].keys(), reverse=True):
-            month_files = grouped_data[year][month]
-            year_content.append({f"{month}월": month_files})
-        nav.append({f"{year}년": year_content})
-    return nav
-
-def collect_markdown_files():
-    """docs 폴더를 스캔하여 내비게이션 구조를 생성합니다."""
+def main():
+    """스크립트의 메인 실행 함수."""
+    logging.info("🔍 'docs' 폴더를 스캔하여 내비게이션 구조를 생성합니다...")
     sections = {}
 
-    # 1. '기사' 섹션 처리 (docs/articles)
-    articles_path = DOCS_ROOT / "articles"
-    if articles_path.exists() and articles_path.is_dir():
-        md_file_paths = [
-            articles_path / f
-            for f in sorted(os.listdir(articles_path), reverse=True)
-            if f.endswith(".md") and f != "index.md"
-        ]
-        if md_file_paths:
-            grouped_articles = group_files_by_date(md_file_paths)
-            sections['기사'] = format_grouped_nav(grouped_articles)
+    # '기사' 섹션 처리
+    articles_index = process_directory(DOCS_ROOT / "articles", "기사")
+    if articles_index:
+        sections['기사'] = articles_index
 
-    # 2. '블로그' 섹션 처리 (docs/blog)
-    blog_path = DOCS_ROOT / "blog"
-    if blog_path.exists() and blog_path.is_dir():
-        md_file_paths = [
-            blog_path / f
-            for f in sorted(os.listdir(blog_path), reverse=True)
-            if f.endswith(".md") and f != "index.md"
-        ]
-        if md_file_paths:
-            grouped_posts = group_files_by_date(md_file_paths)
-            sections['블로그'] = format_grouped_nav(grouped_posts)
+    # '블로그' 섹션 처리
+    blog_index = process_directory(DOCS_ROOT / "blog", "블로그")
+    if blog_index:
+        sections['블로그'] = blog_index
 
-    # 2. '키워드' 섹션 처리 (docs/keywords)
+    # '키워드' 섹션 처리 (하위 디렉토리 포함)
     keywords_path = DOCS_ROOT / "keywords"
     if keywords_path.exists() and keywords_path.is_dir():
         keyword_entries = {}
-        for keyword in sorted(os.listdir(keywords_path)):
-            keyword_dir = keywords_path / keyword
-            if not keyword_dir.is_dir():
-                continue
-
-            md_file_paths = [
-                keyword_dir / f
-                for f in sorted(os.listdir(keyword_dir), reverse=True)
-                if f.endswith(".md")
-            ]
-
-            if md_file_paths:
-                grouped_files = group_files_by_date(md_file_paths)
-                keyword_entries[keyword] = format_grouped_nav(grouped_files)
-
+        all_keyword_dirs = [d for d in sorted(keywords_path.iterdir()) if d.is_dir()]
+        for keyword_dir in all_keyword_dirs:
+            # 각 키워드 폴더를 개별적으로 처리합니다.
+            keyword_index = process_directory(keyword_dir, f"{keyword_dir.name} 관련 글")
+            if keyword_index:
+                keyword_entries[keyword_dir.name] = keyword_index
         if keyword_entries:
-            sections['키워드'] = [{kw: keyword_entries[kw]} for kw in sorted(keyword_entries.keys())]
-
-    return sections
+            # mkdocs.yml의 nav 형식에 맞게 재구성합니다.
+            sections['키워드'] = [{kw: path} for kw, path in sorted(keyword_entries.items())]
+    
+    write_mkdocs_yml(sections)
 
 def write_mkdocs_yml(sections):
     """수집된 파일 목록으로 mkdocs.yml 파일을 생성합니다."""
     config = {
         "site_name": "Singularity Daily",
-        "site_url": "https://leejunyoung399.github.io/SingularityDaily/",
+        "site_url": "https://www.singularitydaily.com/",
+        "site_author": "leejunyoung399",
+        "site_description": "특이점, AI, 생명 연장 등 최신 기술 동향을 수집하고 요약합니다.",
         "theme": {
             "name": "material",
             "language": "ko",
             "logo": "assets/logo.png",
             "favicon": "assets/logo.png",
             "features": [
-                "navigation.instant",
-                "navigation.sections",
+                # "navigation.instant", # '원문 링크' 새 창 열기 기능과의 충돌로 비활성화
                 "navigation.top",
+                "navigation.tracking",
+                "navigation.expand", # 모든 하위 메뉴를 항상 펼쳐진 상태로 유지
                 "content.code.copy",
-                "toc.integrate",
             ]
         },
         "use_directory_urls": False,
         "markdown_extensions": [
             "admonition",
-            {"toc": {"permalink": True}},
+            {"toc": {"permalink": "¶"}},
             "footnotes",
             "meta",
+            "attr_list", # 링크에 속성을 추가할 수 있도록 활성화
         ],
         "extra_css": ["stylesheets/extra.css"],
-        "plugins": ["search", "awesome-pages"],
-        "nav": [{'홈': 'index.md'}] # '홈'은 명시적으로 유지하여 명확성을 높입니다.
+        "plugins": ["search"],
     }
 
-    # '홈' 링크를 맨 앞에 추가합니다. 사이트 제목과 별개로 명확한 '홈' 버튼을 제공합니다.
     nav_structure = [{'홈': 'index.md'}]
-
+    
+    # 원하는 순서대로 nav에 추가
     if '블로그' in sections:
         nav_structure.append({'블로그': sections['블로그']})
-
     if '기사' in sections:
         nav_structure.append({'기사': sections['기사']})
-
     if '키워드' in sections:
         nav_structure.append({'키워드': sections['키워드']})
 
     config['nav'] = nav_structure
-
     output_path = PROJECT_ROOT / "mkdocs.yml"
     with open(output_path, "w", encoding="utf-8") as f:
         yaml.dump(config, f, allow_unicode=True, sort_keys=False, width=1000)
 
     logging.info(f"✅ '{output_path}' 파일이 성공적으로 생성/업데이트되었습니다.")
 
-def main():
-    logging.info("🔍 'docs' 폴더를 스캔하여 내비게이션 구조를 생성합니다...")
-    sections = collect_markdown_files()
-    write_mkdocs_yml(sections)
-
 if __name__ == "__main__":
-    # 이 스크립트가 직접 실행될 때를 위한 기본 로깅 설정
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",

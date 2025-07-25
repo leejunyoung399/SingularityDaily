@@ -26,3 +26,9 @@
 .md-nav__item--section .md-nav[data-md-level="2"] .md-nav__link {
     padding-left: 2.0rem;
 }
+
+/* 좌측 내비게이션 메뉴 최상단에 표시되는 사이트 제목을 숨깁니다. */
+/* '홈' 메뉴와 중복되므로 제거합니다. */
+.md-nav__title {
+    display: none;
+}
