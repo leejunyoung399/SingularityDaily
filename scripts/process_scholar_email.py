@@ -173,7 +173,10 @@ def main():
         raise RuntimeError("Gmail 서비스 객체를 가져오지 못해 스크립트를 중단합니다.")
 
     # 읽지 않은 구글 스칼라 알리미 메일만 가져오도록 쿼리를 복원합니다.
-    query = "from:scholaralerts-noreply@google.com is:unread"
+    # --- 진단을 위한 임시 수정 ---
+    # query = "from:scholaralerts-noreply@google.com is:unread"
+    query = "is:unread"
+    logging.warning(f"주의: 진단 모드로 실행 중입니다. 검색 쿼리: '{query}'")
     logging.info(f"🔍 Gmail에서 다음 쿼리로 새 논문 알림을 검색합니다: '{query}'")
     results = service.users().messages().list(userId="me", q=query).execute()
     messages = results.get("messages", [])
