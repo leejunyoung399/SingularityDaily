@@ -1,6 +1,12 @@
 # AGI 관련 글
 
+- [AGI Greenpac의 최근 실적이 좋습니까, 나쁩니까 - MarketsMojo](AGI Greenpac의 최근 실적이 좋습니까, 나쁩니까 - MarketsMojo.md)
+- [AGI 그린팩 유한회사의 순이익, 1분기 전분기 대비 8% 감소 - 호크](AGI 그린팩 유한회사의 순이익, 1분기 전분기 대비 8% 감소 - 호크.md)
+- [AGI Greenpac은 26회계연도에 생산능력 증가에 힘입어 EBITDA 마진 25% 초과를 예상합니다](AGI Greenpac은 26회계연도에 생산능력 증가에 힘입어 EBITDA 마진 25% 초과를 예상합니다.md)
+- [AGI 도래 이전 2025-2030년이 민주적 AI 거버넌스의 미래를 결정하는 이유](AGI 도래 이전 2025-2030년이 민주적 AI 거버넌스의 미래를 결정하는 이유.md)
+- [AGI Greenpac은 2026 회계연도에 생산능력 증대에 따른 EBITDA 마진 25% 초과를 예상합니다](AGI Greenpac은 2026 회계연도에 생산능력 증대에 따른 EBITDA 마진 25% 초과를 예상합니다.md)
 - [AGI 그린팩, 2025년 7월 실적 발표 견조한 수익 성장 및 유동성 개선](AGI 그린팩, 2025년 7월 실적 발표 견조한 수익 성장 및 유동성 개선.md)
+- [AGI 대비 현대 교육의 특징과 발전 전망 디지털 에이전시의 현상학](AGI 대비 현대 교육의 특징과 발전 전망 디지털 에이전시의 현상학.md)
 - [AGI Greenpac의 최근 실적은 좋습니까, 나쁩니까 - MarketsMojo](AGI Greenpac의 최근 실적은 좋습니까, 나쁩니까 - MarketsMojo.md)
 - [AGI 그린팩 주식회사, 'A'그룹 상승 주도  증시뉴스](AGI 그린팩 주식회사, 'A'그룹 상승 주도  증시뉴스.md)
 - [AGI 그린팩, 2025년 7월 실적 발표 견조한 수익 증가 및 유동성 개선](AGI 그린팩, 2025년 7월 실적 발표 견조한 수익 증가 및 유동성 개선.md)
@@ -22,7 +28,6 @@
 - [AGI 그린팩 유한회사는 우타르프라데시에 새로운 공장 건설을 발표합니다](AGI 그린팩 유한회사는 우타르프라데시에 새로운 공장 건설을 발표합니다.md)
 - [AGI Greenpac 주가는 왜 오르거나 떨어지나요 - MarketsMojo](AGI Greenpac 주가는 왜 오르거나 떨어지나요 - MarketsMojo.md)
 - [AGI Greenpac, 1분기 실적 호조에 주가 상승  증권시장 뉴스](AGI Greenpac, 1분기 실적 호조에 주가 상승  증권시장 뉴스.md)
-- [AGI Greenpac은 2026 회계연도에 생산능력 증대에 따른 EBITDA 마진 25% 초과를 예상합니다](AGI Greenpac은 2026 회계연도에 생산능력 증대에 따른 EBITDA 마진 25% 초과를 예상합니다.md)
 - [AGI Greenpac, 1분기 실적 호조에 주가 상승  증권 시장 뉴스](AGI Greenpac, 1분기 실적 호조에 주가 상승  증권 시장 뉴스.md)
 - [AGI Greenpac 주가는 왜 오르고내리고 있을까요 - MarketsMojo](AGI Greenpac 주가는 왜 오르고내리고 있을까요 - MarketsMojo.md)
 - [AGI Greenpac 유한회사(BOM500187) 2026년 1분기 실적 발표 하이라이트 견조한 성장과 전략적…](AGI Greenpac 유한회사(BOM500187) 2026년 1분기 실적 발표 하이라이트 견조한 성장과 전략적….md)
