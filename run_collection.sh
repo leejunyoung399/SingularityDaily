@@ -15,7 +15,7 @@ git checkout main
 
 # GitHub의 최신 변경사항을 먼저 가져와서 병합(merge)합니다.
 echo "--- GitHub과 동기화 중... ---"
-git pull
+git pull origin main
 
 # Git 사용자 정보를 설정합니다. (커밋 작성자 정보)
 git config --global user.name "Render Cron Bot"
@@ -38,8 +38,12 @@ else
   # 변경된 모든 파일을 추가합니다.
   git add .
   
+  # 변경된 파일 수를 계산하여 커밋 메시지에 포함합니다.
+  ADDED_COUNT=$(git status --porcelain | grep -c "^A")
+  MODIFIED_COUNT=$(git status --porcelain | grep -c "^M")
+  
   # 변경 내용을 커밋합니다.
-  git commit -m "docs: 자동 수집 콘텐츠 업데이트"
+  git commit -m "docs: 자동 수집 콘텐츠 업데이트 (추가: ${ADDED_COUNT}, 수정: ${MODIFIED_COUNT})"
   
   # GitHub 저장소에 변경 내용을 푸시합니다.
   # GITHUB_PAT는 Render에 설정할 개인용 액세스 토큰입니다.
