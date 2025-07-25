@@ -15,7 +15,8 @@ git checkout main
 
 # GitHub의 최신 변경사항을 먼저 가져와서 병합(merge)합니다.
 echo "--- GitHub과 동기화 중... ---"
-git pull origin main
+# 'origin' 대신 전체 URL을 사용하여 원격 저장소와 동기화합니다.
+git pull https://${GITHUB_PAT}@github.com/leejunyoung399/SingularityDaily.git main
 
 # Git 사용자 정보를 설정합니다. (커밋 작성자 정보)
 git config --global user.name "Render Cron Bot"
