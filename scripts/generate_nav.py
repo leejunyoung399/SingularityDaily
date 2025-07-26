@@ -6,6 +6,7 @@ import math
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DOCS_ROOT = PROJECT_ROOT / "docs"
@@ -37,7 +38,8 @@ def create_paginated_index(title, sorted_paths, output_dir):
         for file_path in page_paths:
             file_title = file_path.stem
             relative_link = os.path.relpath(file_path, output_dir)
-            link = str(relative_link).replace("\\", "/")
+            # 링크를 올바르게 생성하고 URL 인코딩을 적용합니다.
+            link = quote(str(relative_link).replace("\\", "/"))
             content += f"- {file_title}\n"
         
         # 페이지네이션 네비게이션 추가
@@ -45,13 +47,13 @@ def create_paginated_index(title, sorted_paths, output_dir):
         nav_links = []
         if page_num > 1:
             prev_page_link = "index.md" if page_num == 2 else f"page-{page_num - 1}.md"
-            nav_links.append(f"<< 이전 페이지")
+            nav_links.append(f"{'<< 이전 페이지'}")
         
         nav_links.append(f"페이지 {page_num} / {total_pages}")
 
         if page_num < total_pages:
             next_page_link = f"page-{page_num + 1}.md"
-            nav_links.append(f"다음 페이지 >>")
+            nav_links.append(f"{'다음 페이지 >>'}")
         
         content += "  |  ".join(nav_links)
 
