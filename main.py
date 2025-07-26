@@ -1,17 +1,7 @@
 import logging
 import sys
+import scripts # scripts 패키지 전체를 import 합니다.
 
-# 각 스크립트의 메인 함수를 import 합니다.
-# - collect_from_rss: 일반 RSS 피드에서 '기사'를 수집합니다.
-# - collect_from_gmail: Google Alerts RSS에서 '키워드'별 기사를 수집합니다.
-# - process_scholar_email: Google Scholar 이메일에서 '논문'을 수집합니다.
-# - cleanup_duplicates: 수집된 모든 콘텐츠의 중복을 제거합니다.
-# - generate_nav: 최종적으로 사이트의 내비게이션을 생성합니다.
-from scripts import collect_from_rss as general_articles_collector
-from scripts import collect_from_gmail as google_alerts_collector
-from scripts import process_scholar_email as scholar_collector
-from scripts import cleanup_duplicates as duplicate_cleaner
-from scripts import generate_nav as nav_generator
 
 # 로깅 설정
 logging.basicConfig(
@@ -42,11 +32,11 @@ def run_task(name, task_function):
 if __name__ == "__main__":
     # 실행할 작업 목록 정의
     tasks = [
-        ("일반 RSS 기사 수집", general_articles_collector.main),
-        ("Google Alerts 키워드 기사 수집", google_alerts_collector.main),
-        ("Google Scholar 논문 수집", scholar_collector.main),
-        ("중복 콘텐츠 정리", duplicate_cleaner.main),
-        ("내비게이션 생성", nav_generator.main),
+        ("일반 RSS 기사 수집", scripts.collect_from_rss_main),
+        ("Google Alerts 키워드 기사 수집", scripts.collect_from_gmail_main),
+        ("Google Scholar 논문 수집", scripts.process_scholar_email_main),
+        ("중복 콘텐츠 정리", scripts.cleanup_duplicates_main),
+        ("내비게이션 생성", scripts.generate_nav_main),
     ]
 
     for name, func in tasks:
