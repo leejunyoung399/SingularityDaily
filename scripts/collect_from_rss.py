@@ -76,7 +76,7 @@ def process_entry(entry, existing_titles, lock):
             logging.error(f"번역 실패: {title_en}")
             return False
 
-        if save_markdown(title_ko, title_en, summary_ko, url):
+        if save_markdown(title_ko, title_en, summary_ko, link):
             return True # 제목은 이미 목록에 추가되었습니다.
         return False
 
@@ -117,7 +117,7 @@ def main():
     logging.info(f"총 {len(all_tasks)}개의 일반 RSS 항목을 병렬로 처리합니다...")
 
     successful_saves = 0
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         future_to_task = {executor.submit(process_entry, task, existing_titles, lock): task for task in all_tasks}
         
         for i, future in enumerate(as_completed(future_to_task), 1):

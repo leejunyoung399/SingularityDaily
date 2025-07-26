@@ -17,6 +17,13 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 
+# pypdf 라이브러리에서 발생하는 과도한 경고 로그를 필터링합니다.
+# ERROR 레벨 이상의 로그만 표시하도록 설정하여, 로그를 깨끗하게 유지합니다.
+logging.getLogger("pypdf").setLevel(logging.ERROR)
+# google-auth-oauthlib 및 oauth2client 라이브러리의 file_cache 관련 경고를 필터링합니다.
+logging.getLogger("google_auth_oauthlib.flow").setLevel(logging.ERROR)
+logging.getLogger("oauth2client").setLevel(logging.ERROR)
+
 def run_task(name, task_function):
     """주어진 작업을 실행하고 성공 여부를 로깅합니다."""
     logging.info(f"--- 🚀 '{name}' 작업 시작 ---")
