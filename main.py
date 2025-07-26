@@ -1,5 +1,13 @@
 import logging
 import sys
+import os
+
+# --- 경로 설정 ---
+# 현재 파일의 디렉토리(프로젝트 루트)를 Python 경로에 추가합니다.
+# 이렇게 하면 어떤 환경에서든 'scripts' 패키지를 안정적으로 찾을 수 있습니다.
+project_root = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, project_root)
+
 import scripts # scripts 패키지 전체를 import 합니다.
 
 
