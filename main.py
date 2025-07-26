@@ -1,12 +1,12 @@
 import logging
 import sys
 
-# 각 스크립트의 메인 함수를 import 합니다.
-from scripts import collect_from_rss as general_articles_collector
-from scripts import collect_from_gmail as google_alerts_collector
-from scripts import process_scholar_email as scholar_collector
-from scripts import cleanup_duplicates as duplicate_cleaner
-from scripts import generate_nav as nav_generator
+# 각 스크립트 모듈을 직접 import 합니다.
+import scripts.collect_from_rss
+import scripts.collect_from_gmail
+import scripts.process_scholar_email
+import scripts.cleanup_duplicates
+import scripts.generate_nav
 
 # 로깅 설정
 logging.basicConfig(
@@ -37,11 +37,11 @@ def run_task(name, task_function):
 if __name__ == "__main__":
     # 실행할 작업 목록 정의
     tasks = [
-        ("일반 RSS 기사 수집", general_articles_collector.main),
-        ("Google Alerts 키워드 기사 수집", google_alerts_collector.main),
-        ("Google Scholar 논문 수집", scholar_collector.main),
-        ("중복 콘텐츠 정리", duplicate_cleaner.main),
-        ("내비게이션 생성", nav_generator.main),
+        ("일반 RSS 기사 수집", scripts.collect_from_rss.main),
+        ("Google Alerts 키워드 기사 수집", scripts.collect_from_gmail.main),
+        ("Google Scholar 논문 수집", scripts.process_scholar_email.main),
+        ("중복 콘텐츠 정리", scripts.cleanup_duplicates.main),
+        ("내비게이션 생성", scripts.generate_nav.main),
     ]
 
     for name, func in tasks:
