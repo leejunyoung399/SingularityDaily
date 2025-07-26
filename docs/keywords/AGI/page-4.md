@@ -1,13 +1,13 @@
 # AGI 관련 글
 
-- AGI Greenpac 주가, 1분기 영업이익 41% 증가에 15% 급등 - AInvest
-- 27개 매개변수의 뇌에서 영감을 받은 아키텍처가 ARC-AGI, 수도쿠 익스트림, 미로…를 해결하다
-- 8월 출시 예정인 ChatGPT의 오픈AI 대규모 GPT-5 업그레이드 - 야후! 테크
-- AGI Greenpac 주가는 왜 오르고떨어지나요 - MarketsMojo
-- (AGI) 종합 거래 전략 보고서 - 주식 트레이더 데일리
-- (AGI) 선제적 전략 - 주식 트레이더 일일
-- (AGI) 주식 거래 청사진
-- '마누스'가 뭐길래…세계 최초 범용 AI라 자칭까지 - 네이트 뉴스
+- [(주)타모라스테킨도, 인도네시아 북수마트라주 델리세르당군 찌모라와 지역의 기간제 근로 계약](%28%EC%A3%BC%29%ED%83%80%EB%AA%A8%EB%9D%BC%EC%8A%A4%ED%85%8C%ED%82%A8%EB%8F%84%2C%20%EC%9D%B8%EB%8F%84%EB%84%A4%EC%8B%9C%EC%95%84%20%EB%B6%81%EC%88%98%EB%A7%88%ED%8A%B8%EB%9D%BC%EC%A3%BC%20%EB%8D%B8%EB%A6%AC%EC%84%B8%EB%A5%B4%EB%8B%B9%EA%B5%B0%20%EC%B0%8C%EB%AA%A8%EB%9D%BC%EC%99%80%20%EC%A7%80%EC%97%AD%EC%9D%98%20%EA%B8%B0%EA%B0%84%EC%A0%9C%20%EA%B7%BC%EB%A1%9C%20%EA%B3%84%EC%95%BD.md)
+- [(AGI) 종합 거래 전략 보고서 - 주식 트레이더 데일리](%28AGI%29%20%EC%A2%85%ED%95%A9%20%EA%B1%B0%EB%9E%98%20%EC%A0%84%EB%9E%B5%20%EB%B3%B4%EA%B3%A0%EC%84%9C%20-%20%EC%A3%BC%EC%8B%9D%20%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%20%EB%8D%B0%EC%9D%BC%EB%A6%AC.md)
+- [(AGI) 선제적 전략 - 주식 트레이더 일일](%28AGI%29%20%EC%84%A0%EC%A0%9C%EC%A0%81%20%EC%A0%84%EB%9E%B5%20-%20%EC%A3%BC%EC%8B%9D%20%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%20%EC%9D%BC%EC%9D%BC.md)
+- [2.4 자산의 자선 단체 또는 개인 기증](2.4%20%EC%9E%90%EC%82%B0%EC%9D%98%20%EC%9E%90%EC%84%A0%20%EB%8B%A8%EC%B2%B4%20%EB%98%90%EB%8A%94%20%EA%B0%9C%EC%9D%B8%20%EA%B8%B0%EC%A6%9D.md)
+- [(AGI) 주식 거래 청사진](%28AGI%29%20%EC%A3%BC%EC%8B%9D%20%EA%B1%B0%EB%9E%98%20%EC%B2%AD%EC%82%AC%EC%A7%84.md)
+- [10월, 역대 최대 규모의 개발자 데이를 예고하는 OpenAI GPT-5도 포함될까](10%EC%9B%94%2C%20%EC%97%AD%EB%8C%80%20%EC%B5%9C%EB%8C%80%20%EA%B7%9C%EB%AA%A8%EC%9D%98%20%EA%B0%9C%EB%B0%9C%EC%9E%90%20%EB%8D%B0%EC%9D%B4%EB%A5%BC%20%EC%98%88%EA%B3%A0%ED%95%98%EB%8A%94%20OpenAI%20GPT-5%EB%8F%84%20%ED%8F%AC%ED%95%A8%EB%90%A0%EA%B9%8C.md)
+- ['마누스'가 뭐길래…세계 최초 범용 AI라 자칭까지 - 네이트 뉴스](%27%EB%A7%88%EB%88%84%EC%8A%A4%27%EA%B0%80%20%EB%AD%90%EA%B8%B8%EB%9E%98%E2%80%A6%EC%84%B8%EA%B3%84%20%EC%B5%9C%EC%B4%88%20%EB%B2%94%EC%9A%A9%20AI%EB%9D%BC%20%EC%9E%90%EC%B9%AD%EA%B9%8C%EC%A7%80%20-%20%EB%84%A4%EC%9D%B4%ED%8A%B8%20%EB%89%B4%EC%8A%A4.md)
+- [2025년 인공지능을 이해하는 5가지 열쇠 - Infobae](2025%EB%85%84%20%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%EC%9D%84%20%EC%9D%B4%ED%95%B4%ED%95%98%EB%8A%94%205%EA%B0%80%EC%A7%80%20%EC%97%B4%EC%87%A0%20-%20Infobae.md)
 
 ---
 << 이전 페이지  |  페이지 4 / 4
