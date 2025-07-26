@@ -55,14 +55,14 @@ def parse_scholar_email(msg):
     headers = {h["name"]: h["value"] for h in msg["payload"]["headers"]}
     subject = headers.get("Subject", "")
 
-    # "keyword - 새로운 결과" 또는 "keyword - new results" 형식의 제목에서 키워드 추출
-    keyword_match = re.match(r"^(.*?)\s*-\s*(?:new results|새로운 결과)", subject, re.IGNORECASE)
-    if keyword_match:
-        keyword = keyword_match.group(1).strip()
-    else:
+    keyword_match = re.match(r'^(.*?)\s*-\s*(?:new results|새로운 결과)', subject, re.IGNORECASE)
+    
+    if not keyword_match:
         logging.info(f"유효한 알림 메일이 아님 (제목: '{subject}'). 건너뜁니다.")
         return None, [] # 유효한 알림이 아니므로 None을 반환하여 버리도록 신호
 
+    # 매치된 경우, 첫 번째 그룹에서 키워드를 추출합니다.
+    keyword = keyword_match.group(1).strip()
     logging.info(f"🔑 추출된 키워드: {keyword}")
 
     body_data = get_html_payload_from_message(msg)
