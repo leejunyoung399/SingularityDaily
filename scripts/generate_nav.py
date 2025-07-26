@@ -40,7 +40,7 @@ def create_paginated_index(title, sorted_paths, output_dir):
             relative_link = os.path.relpath(file_path, output_dir)
             # 링크를 올바르게 생성하고 URL 인코딩을 적용합니다.
             link = quote(str(relative_link).replace("\\", "/"))
-            content += f"- {file_title}\n"
+            content += f"- [{file_title}]({link})\n"
         
         # 페이지네이션 네비게이션 추가
         content += "\n---\n"
